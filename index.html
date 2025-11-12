@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Gym Log">
     <title>Gym Assistant</title>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #111; color: #eee; }
@@ -12,9 +15,17 @@
         .item { background: #222; padding: 10px; margin: 10px 0; border-left: 3px solid #444; }
         .ex { color: #0f8; font-weight: bold; }
         .dt { color: #888; font-size: 12px; }
+        #install { background: #f80; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
+        #install button { background: #000; color: #f80; margin-top: 10px; }
     </style>
 </head>
 <body>
+    <div id="install" style="display: none;">
+        <strong>⚠️ Add to Home Screen</strong>
+        <p>Safari deletes data after 7 days. Add this to your home screen to save workouts permanently!</p>
+        <p style="font-size: 14px; margin-top: 10px;">Tap Share → Add to Home Screen</p>
+        <button onclick="document.getElementById('install').style.display='none'">Dismiss</button>
+    </div>
     <h1>💪 (Dead Simple) Gym Log</h1>
     <input id="i" placeholder="bench 8, 8, 7 x 100" autofocus>
     <button onclick="log()">Log</button>
@@ -87,6 +98,14 @@
                 log();
             }
         });
+        // Detect if running in Safari on iOS (not already installed)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isStandalone = window.navigator.standalone === true;
+
+        // Show warning every time on iOS Safari unless running as standalone app
+        if (true) {
+            document.getElementById('install').style.display = 'block';
+        }
         show();
     </script>
 </body>
