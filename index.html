@@ -105,23 +105,19 @@
             let i = 0;
             let typoMade = false;
             const type = () => {
-                if (i < chars.length) {
-                    const isLetter = /[a-zA-Z]/.test(chars[i]);
-                    const typo = !typoMade && isLetter && Math.random() < 0.08 && i > 0;
-                    if (typo) {
-                        typoMade = true;
-                        const wrong = String.fromCharCode(97 + Math.floor(Math.random() * 26));
-                        msgEl.textContent += wrong;
-                        setTimeout(() => {
-                            msgEl.textContent = msgEl.textContent.slice(0, -1);
-                            setTimeout(() => { msgEl.textContent += chars[i++]; type(); }, 200);
-                        }, 300);
-                    } else {
-                        msgEl.textContent += chars[i++];
-                        setTimeout(type, 20 + Math.random() * 80);
-                    }
+                if (i >= chars.length) return setTimeout(() => msgEl.classList.remove('typing'), 1000);
+                const isLetter = /[a-zA-Z]/.test(chars[i]);
+                const typo = !typoMade && isLetter && Math.random() < 0.08 && i > 0;
+                if (typo) {
+                    typoMade = true;
+                    const letters = 'abcdefghijklmnopqrstuvwxyz'.replace(chars[i].toLowerCase(), '');
+                    const wrong = letters[Math.floor(Math.random() * letters.length)];
+                    const beforeTypo = msgEl.textContent;
+                    msgEl.textContent += wrong;
+                    setTimeout(() => { msgEl.textContent = beforeTypo; setTimeout(() => { msgEl.textContent += chars[i++]; type(); }, 200); }, 300);
                 } else {
-                    setTimeout(() => msgEl.classList.remove('typing'), 1000);
+                    msgEl.textContent += chars[i++];
+                    setTimeout(type, 20 + Math.random() * 80);
                 }
             };
             type();
