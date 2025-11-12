@@ -12,7 +12,7 @@
         body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #111; color: #eee; }
         h1 { font-size: 20px; }
         input { width: 100%; padding: 12px; font-size: 16px; background: #222; border: 2px solid #444; color: #eee; margin-bottom: 10px; }
-        button { width: 100%; padding: 12px; font-size: 16px; background: #0f8; border: none; color: #000; font-weight: bold; cursor: pointer; }
+        button { padding: 12px; font-size: 16px; background: #0f8; border: none; color: #000; font-weight: bold; cursor: pointer; }
         #logButton { width: 100%; padding: 12px; font-size: 16px; background: #0f8; border: none; color: #000; font-weight: bold; cursor: pointer; }
         #msg { padding: 15px; background: #222; margin: 20px 0; border-left: 4px solid #0f8; }
         .item { background: #222; padding: 10px; margin: 10px 0; border-left: 3px solid #444; display: flex; justify-content: space-between; align-items: center; }
@@ -34,7 +34,7 @@
     </div>
     <h1>💪 (Dead Simple) Gym Log</h1>
     <input id="i" placeholder="bench 8, 8, 7 x 100" autofocus>
-    <button onclick="log()">Log</button>
+    <button id="logButton" onclick="log()">Log</button>
     <div id="msg"></div>
     <div id="hist"></div>
     <script>
@@ -124,7 +124,7 @@
         const isStandalone = window.navigator.standalone === true;
 
         // Show warning every time on iOS Safari unless running as standalone app
-        if (isIos && !isStandalone) {
+        if (isIOS && !isStandalone) {
             document.getElementById('install').style.display = 'block';
         }
         show();
