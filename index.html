@@ -122,7 +122,7 @@
         const isStandalone = window.navigator.standalone === true;
 
         // Show warning every time on iOS Safari unless running as standalone app
-        if (true) {
+        if (isIos && !isStandalone) {
             document.getElementById('install').style.display = 'block';
         }
         show();
