@@ -100,7 +100,20 @@
             msgEl.textContent = '';
             let i = 0;
             const type = () => {
-                if (i < t.length) { msgEl.textContent += t[i++]; setTimeout(type, 30); }
+                if (i < t.length) {
+                    const typo = Math.random() < 0.08 && i > 0;
+                    if (typo) {
+                        const wrong = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+                        msgEl.textContent += wrong;
+                        setTimeout(() => {
+                            msgEl.textContent = msgEl.textContent.slice(0, -1);
+                            setTimeout(() => { msgEl.textContent += t[i++]; type(); }, 40);
+                        }, 300);
+                    } else {
+                        msgEl.textContent += t[i++];
+                        setTimeout(type, 20 + Math.random() * 80);
+                    }
+                }
             };
             type();
         }
