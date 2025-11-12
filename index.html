@@ -95,7 +95,15 @@
             show();
         }
 
-        function msg(t) { document.getElementById('msg').textContent = t; }
+        function msg(t) {
+            const msgEl = document.getElementById('msg');
+            msgEl.textContent = '';
+            let i = 0;
+            const type = () => {
+                if (i < t.length) { msgEl.textContent += t[i++]; setTimeout(type, 30); }
+            };
+            type();
+        }
 
         function show() {
             const all = get();
@@ -127,6 +135,9 @@
         if (isIOS && !isStandalone) {
             document.getElementById('install').style.display = 'block';
         }
+
+        const quotes = ['Ready to crush it? 💪', 'Log your lifts! 🏋️', 'Track your progress 📊', 'Every rep counts! 🔥', 'Time to get strong 💯'];
+        msg(quotes[Math.floor(Math.random() * quotes.length)]);
         show();
     </script>
 </body>
