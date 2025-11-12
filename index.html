@@ -11,12 +11,16 @@
         body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #111; color: #eee; }
         input { width: 100%; padding: 12px; font-size: 16px; background: #222; border: 2px solid #444; color: #eee; margin-bottom: 10px; }
         button { width: 100%; padding: 12px; font-size: 16px; background: #0f8; border: none; color: #000; font-weight: bold; cursor: pointer; }
+        #logButton { width: 100%; padding: 12px; font-size: 16px; background: #0f8; border: none; color: #000; font-weight: bold; cursor: pointer; }
         #msg { padding: 15px; background: #222; margin: 20px 0; border-left: 4px solid #0f8; }
-        .item { background: #222; padding: 10px; margin: 10px 0; border-left: 3px solid #444; }
+        .item { background: #222; padding: 10px; margin: 10px 0; border-left: 3px solid #444; display: flex; justify-content: space-between; align-items: center; }
+        .item-content { flex: 1; }
         .ex { color: #0f8; font-weight: bold; }
         .dt { color: #888; font-size: 12px; }
         #install { background: #f80; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
         #install button { background: #000; color: #f80; margin-top: 10px; }
+        .del { background: #f44; color: #fff; border: none; padding: 8px 12px; cursor: pointer; font-size: 14px; border-radius: 4px; }
+        .del:hover { background: #f66; }
     </style>
 </head>
 <body>
@@ -34,12 +38,14 @@
     <script>
         const get = () => JSON.parse(localStorage.getItem('w') || '[]');
         const save = w => localStorage.setItem('w', JSON.stringify([...get(), w]));
+        const saveAll = w => localStorage.setItem('w', JSON.stringify(w));
+
         function isHeavier(current, previous) {
-            const toKg = (wt, unit) => 
+            const toKg = (wt, unit) =>
                 (unit === 'lbs' || unit === 'lb') ? wt * 0.453592 : wt;
             return toKg(current.wt, current.unit) > toKg(previous.wt, previous.unit);
         }
-        
+
         function parse(t) {
             t = t.toLowerCase();
             const m = t.match(/(.+?)\s+([\d,\s]+)\s*x\s*(\d+)\s*(lbs?|kg)?/);
@@ -52,46 +58,59 @@
                 date: Date.now()
             };
         }
-        
+
         function log() {
             const input = document.getElementById('i');
             const w = parse(input.value);
             if (!w) { msg('Bad format. Try: "squat 5,5 x 100 kg" or "squat 10,8,6 x 225 lbs"'); return; }
-            
+
             const hist = get().filter(x => x.ex === w.ex);
             const last = hist[hist.length - 1];
-            
+
             save(w);
-            
+
             if (!last) {
                 msg(`${w.ex}: First time! 🎉`);
             } else {
                 const curr = w.reps.reduce((a,b) => a+b, 0);
                 const prev = last.reps.reduce((a,b) => a+b, 0);
-                const comp = isHeavier(w, last) ? '💪 Heavier!' : 
-                    curr > prev ? '📈 More reps!' : 
+                const comp = isHeavier(w, last) ? '💪 Heavier!' :
+                    curr > prev ? '📈 More reps!' :
                     isHeavier(last, w) ? '😓 Lighter' :
                     curr < prev ? '😓 Fewer reps' : '👍 Same';
                 msg(`Last: ${last.wt}${last.unit} x ${last.reps.join(',')}. ${comp}`);
             }
-            
+
             input.value = '';
             show();
         }
-        
-        function msg(t) { document.getElementById('msg').textContent = t; }
-        
-        function show() {
-            const h = get().slice(-10).reverse();
-            document.getElementById('hist').innerHTML = h.map(w => 
-                `<div class="item">
-                    <div class="ex">${w.ex}</div>
-                    <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
-                    <div class="dt">${new Date(w.date).toLocaleString()}</div>
-                </div>`
-            ).join('');
+
+        function del(index) {
+            const all = get();
+            all.splice(index, 1);
+            saveAll(all);
+            msg('Entry deleted');
+            show();
         }
-        
+
+        function msg(t) { document.getElementById('msg').textContent = t; }
+
+        function show() {
+            const all = get();
+            const h = all.slice(-10).reverse();
+            document.getElementById('hist').innerHTML = h.map((w, i) => {
+                const actualIndex = all.length - 10 + (9 - i);
+                return `<div class="item">
+                    <div class="item-content">
+                        <div class="ex">${w.ex}</div>
+                        <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
+                        <div class="dt">${new Date(w.date).toLocaleString()}</div>
+                    </div>
+                    <button class="del" onclick="del(${actualIndex})">🗑️</button>
+                </div>`;
+            }).join('');
+        }
+
         document.getElementById('i').addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
