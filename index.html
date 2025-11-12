@@ -52,12 +52,12 @@
 
         function parse(t) {
             t = t.toLowerCase();
-            const m = t.match(/(.+?)\s+([\d,\s]+)\s*x\s*(\d+)\s*(lbs?|kg)?/);
+            const m = t.match(/(.+?)\s+([\d,\s]+)\s*x\s*([\d.,]+)\s*(lbs?|kg)?/);
             if (!m) return null;
             return {
                 ex: m[1].trim(),
                 reps: m[2].split(',').map(r => +r.trim()),
-                wt: +m[3],
+                wt: +m[3].replace(',', '.'),
                 unit: m[4] || 'kg',
                 date: Date.now()
             };
@@ -97,13 +97,12 @@
             show();
         }
 
-        function msg(t) {
+        function msg(t) { 
             const msgEl = document.getElementById('msg');
             msgEl.textContent = '';
             msgEl.classList.add('typing');
             const chars = Array.from(t);
-            let i = 0;
-            let typoMade = false;
+            let i = 0, typoMade = false;
             const type = () => {
                 if (i >= chars.length) return setTimeout(() => msgEl.classList.remove('typing'), 1000);
                 const isLetter = /[a-zA-Z]/.test(chars[i]);
@@ -153,7 +152,7 @@
         if (isIOS && !isStandalone) {
             document.getElementById('install').style.display = 'block';
         }
-
+        
         const quotes = ['Ready to crush it? 💪', 'Log your lifts! 🏋️', 'Track your progress 📊', 'Every rep counts! 🔥', 'Time to get strong 💯'];
         msg(quotes[Math.floor(Math.random() * quotes.length)]);
         show();
