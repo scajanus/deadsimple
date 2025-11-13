@@ -3,6 +3,7 @@
 const {
     InputStrategy,
     ExerciseSetsStrategy,
+    EndWorkoutStrategy,
     DefaultStrategy,
     InputParser
 } = require('../js/inputParser.js');
@@ -114,6 +115,35 @@ describe('ExerciseSetsStrategy', () => {
     // Test invalid input
     const result9 = strategy.parse('invalid input');
     assert(result9 === null, 'returns null for invalid input');
+
+    // Test workout_id field
+    const result10 = strategy.parse('bench 10 x 100');
+    assert(result10.workout_id === null, 'includes workout_id field set to null');
+});
+
+// Test EndWorkoutStrategy
+describe('EndWorkoutStrategy', () => {
+    const strategy = new EndWorkoutStrategy();
+
+    // Test canHandle
+    assert(strategy.canHandle('end workout'), 'recognizes "end workout"');
+    assert(strategy.canHandle('END WORKOUT'), 'recognizes uppercase "END WORKOUT"');
+    assert(strategy.canHandle('  end workout  '), 'recognizes with whitespace');
+    assert(strategy.canHandle('end'), 'recognizes shortened "end"');
+    assert(strategy.canHandle('END'), 'recognizes uppercase "END"');
+    assert(!strategy.canHandle('end workout now'), 'rejects extended commands');
+    assert(!strategy.canHandle('ending'), 'rejects partial matches');
+    assert(!strategy.canHandle('bench 8 x 100'), 'rejects exercise input');
+
+    // Test parse
+    const result1 = strategy.parse('end workout');
+    assert(result1 !== null, 'parses "end workout"');
+    assert(result1.type === 'command', 'returns command type');
+    assert(result1.action === 'end_workout', 'returns end_workout action');
+
+    const result2 = strategy.parse('END');
+    assert(result2.type === 'command', 'parses uppercase "END"');
+    assert(result2.action === 'end_workout', 'returns correct action for "END"');
 });
 
 // Test DefaultStrategy
@@ -153,6 +183,16 @@ describe('InputParser', () => {
 
     const result6 = parser.parse('');
     assert(result6 === null, 'returns null for empty string');
+
+    // Command inputs
+    const result7 = parser.parse('end workout');
+    assert(result7 !== null, 'parses command input');
+    assert(result7.type === 'command', 'returns command type');
+    assert(result7.action === 'end_workout', 'returns correct action');
+
+    const result8 = parser.parse('END');
+    assert(result8 !== null, 'parses shortened command');
+    assert(result8.type === 'command', 'returns command type for "END"');
 });
 
 // Test edge cases

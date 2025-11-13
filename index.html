@@ -18,9 +18,13 @@
         #msg.typing::after { content: '▌'; animation: blink 0.7s infinite; margin-left: 2px; }
         @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
         .item { background: #222; padding: 10px; margin: 10px 0; border-left: 3px solid #444; display: flex; justify-content: space-between; align-items: center; }
+        .item.in-progress { border-left: 3px solid #0f8; background: #1a2a1a; }
         .item-content { flex: 1; }
         .ex { color: #0f8; font-weight: bold; }
         .dt { color: #888; font-size: 12px; }
+        .in-progress-badge { background: #0f8; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-left: 8px; }
+        .workout-separator { margin: 20px 0 10px 0; padding: 8px 0; border-top: 2px solid #444; }
+        .workout-label { color: #888; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         #install { background: #f80; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
         #install button { background: #000; color: #f80; margin-top: 10px; }
         .del { background: #f44; color: #fff; border: none; padding: 8px 12px; cursor: pointer; font-size: 14px; border-radius: 4px; }
@@ -59,11 +63,45 @@
             return inputParser.parse(t);
         }
 
+        function endWorkout() {
+            const all = get();
+            const unassigned = all.filter(x => x.workout_id === null);
+
+            if (unassigned.length === 0) {
+                msg('No exercises to end. Start logging some exercises first! 💪');
+                return;
+            }
+
+            // Generate new workout ID (timestamp)
+            const workoutId = Date.now();
+
+            // Assign workout ID to all unassigned exercises
+            all.forEach(exercise => {
+                if (exercise.workout_id === null) {
+                    exercise.workout_id = workoutId;
+                }
+            });
+
+            saveAll(all);
+            msg(`Workout ended! 🎉 ${unassigned.length} exercise${unassigned.length > 1 ? 's' : ''} saved.`);
+            show();
+        }
+
         function log() {
             const input = document.getElementById('i');
             const w = parse(input.value);
-            if (!w) { msg('Bad format. Try: "squat 5,5 x 100 kg" or "squat 10,8,6 x 225 lbs"'); return; }
+            if (!w) { msg('Bad format. Try: "squat 5,5 x 100 kg" or "squat 10,8,6 x 225 lbs" or "end workout"'); return; }
 
+            // Handle commands
+            if (w.type === 'command') {
+                if (w.action === 'end_workout') {
+                    endWorkout();
+                }
+                input.value = '';
+                return;
+            }
+
+            // Handle exercises
             const hist = get().filter(x => x.ex === w.ex);
             const last = hist[hist.length - 1];
 
@@ -120,18 +158,37 @@
 
         function show() {
             const all = get();
-            const h = all.slice(-10).reverse();
-            document.getElementById('hist').innerHTML = h.map((w, i) => {
-                const actualIndex = all.length - 10 + (9 - i);
-                return `<div class="item">
+            const h = all.slice(-20).reverse();  // Show more items to see workout groups
+
+            let html = '';
+            let lastWorkoutId = undefined;
+
+            h.forEach((w, i) => {
+                const actualIndex = all.length - 20 + (19 - i);
+
+                // Add workout separator when workout_id changes
+                if (w.workout_id !== null && w.workout_id !== lastWorkoutId) {
+                    html += `<div class="workout-separator">
+                        <div class="workout-label">Workout - ${new Date(w.workout_id).toLocaleDateString()}</div>
+                    </div>`;
+                }
+
+                // Add workout_id badge for in-progress workouts
+                const badge = w.workout_id === null ? '<span class="in-progress-badge">In progress</span>' : '';
+
+                html += `<div class="item ${w.workout_id === null ? 'in-progress' : ''}">
                     <div class="item-content">
-                        <div class="ex">${w.ex}</div>
+                        <div class="ex">${w.ex} ${badge}</div>
                         <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
                         <div class="dt">${new Date(w.date).toLocaleString()}</div>
                     </div>
                     <button class="del" onclick="del(${actualIndex})">🗑️</button>
                 </div>`;
-            }).join('');
+
+                lastWorkoutId = w.workout_id;
+            });
+
+            document.getElementById('hist').innerHTML = html;
         }
 
         document.getElementById('i').addEventListener('keydown', e => {

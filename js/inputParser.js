@@ -27,7 +27,23 @@ class ExerciseSetsStrategy extends InputStrategy {
             reps: m[2].split(',').map(r => +r.trim()),
             wt: +m[3].replace(',', '.'),
             unit: m[4] || 'kg',
-            date: Date.now()
+            date: Date.now(),
+            workout_id: null  // Will be assigned when workout is ended
+        };
+    }
+}
+
+// Strategy for workout commands (e.g., "end workout")
+class EndWorkoutStrategy extends InputStrategy {
+    canHandle(input) {
+        const normalized = input.toLowerCase().trim();
+        return normalized === 'end workout' || normalized === 'end';
+    }
+
+    parse(input) {
+        return {
+            type: 'command',
+            action: 'end_workout'
         };
     }
 }
@@ -47,8 +63,9 @@ class DefaultStrategy extends InputStrategy {
 class InputParser {
     constructor() {
         this.strategies = [
-            new ExerciseSetsStrategy(),
-            new DefaultStrategy()
+            new EndWorkoutStrategy(),      // Check commands first
+            new ExerciseSetsStrategy(),     // Then exercise formats
+            new DefaultStrategy()           // Finally, fallback
         ];
     }
 
@@ -67,6 +84,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         InputStrategy,
         ExerciseSetsStrategy,
+        EndWorkoutStrategy,
         DefaultStrategy,
         InputParser
     };
