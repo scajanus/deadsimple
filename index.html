@@ -50,17 +50,76 @@
             return toKg(current.wt, current.unit) > toKg(previous.wt, previous.unit);
         }
 
+        // Strategy Pattern for Input Parsing
+
+        // Base Strategy Interface
+        class InputStrategy {
+            canHandle(input) {
+                throw new Error('canHandle must be implemented');
+            }
+
+            parse(input) {
+                throw new Error('parse must be implemented');
+            }
+        }
+
+        // Strategy for Exercise Sets (e.g., "bench 8, 8, 7 x 100")
+        class ExerciseSetsStrategy extends InputStrategy {
+            canHandle(input) {
+                const normalized = input.toLowerCase();
+                return /(.+?)\s+([\d,\s]+)\s*x\s*([\d.,]+)\s*(lbs?|kg)?/.test(normalized);
+            }
+
+            parse(input) {
+                const t = input.toLowerCase();
+                const m = t.match(/(.+?)\s+([\d,\s]+)\s*x\s*([\d.,]+)\s*(lbs?|kg)?/);
+                if (!m) return null;
+                return {
+                    ex: m[1].trim(),
+                    reps: m[2].split(',').map(r => +r.trim()),
+                    wt: +m[3].replace(',', '.'),
+                    unit: m[4] || 'kg',
+                    date: Date.now()
+                };
+            }
+        }
+
+        // Default Strategy for unrecognized input
+        class DefaultStrategy extends InputStrategy {
+            canHandle(input) {
+                return true; // Always handles input as fallback
+            }
+
+            parse(input) {
+                return null; // Return null to indicate unrecognized input
+            }
+        }
+
+        // Input Parser (Context) that manages strategies
+        class InputParser {
+            constructor() {
+                this.strategies = [
+                    new ExerciseSetsStrategy(),
+                    new DefaultStrategy()
+                ];
+            }
+
+            parse(input) {
+                for (const strategy of this.strategies) {
+                    if (strategy.canHandle(input)) {
+                        return strategy.parse(input);
+                    }
+                }
+                return null;
+            }
+        }
+
+        // Create global parser instance
+        const inputParser = new InputParser();
+
+        // Legacy parse function (delegates to InputParser)
         function parse(t) {
-            t = t.toLowerCase();
-            const m = t.match(/(.+?)\s+([\d,\s]+)\s*x\s*([\d.,]+)\s*(lbs?|kg)?/);
-            if (!m) return null;
-            return {
-                ex: m[1].trim(),
-                reps: m[2].split(',').map(r => +r.trim()),
-                wt: +m[3].replace(',', '.'),
-                unit: m[4] || 'kg',
-                date: Date.now()
-            };
+            return inputParser.parse(t);
         }
 
         function log() {
