@@ -65,7 +65,8 @@
 
         function endWorkout() {
             const all = get();
-            const unassigned = all.filter(x => x.workout_id === null);
+            // Match exercises with no workout_id (null or undefined for backward compatibility)
+            const unassigned = all.filter(x => !x.workout_id);
 
             if (unassigned.length === 0) {
                 msg('No exercises to end. Start logging some exercises first! 💪');
@@ -77,7 +78,7 @@
 
             // Assign workout ID to all unassigned exercises
             all.forEach(exercise => {
-                if (exercise.workout_id === null) {
+                if (!exercise.workout_id) {
                     exercise.workout_id = workoutId;
                 }
             });
@@ -169,7 +170,8 @@
 
                 // Add workout separator when workout_id changes
                 if (w.workout_id !== lastWorkoutId) {
-                    if (w.workout_id === null) {
+                    if (!w.workout_id) {
+                        // No workout_id (null or undefined) = in progress
                         html += `<div class="workout-separator">
                             <div class="workout-label">Workout - In progress</div>
                         </div>`;
@@ -180,7 +182,7 @@
                     }
                 }
 
-                html += `<div class="item ${w.workout_id === null ? 'in-progress' : ''}">
+                html += `<div class="item ${!w.workout_id ? 'in-progress' : ''}">
                     <div class="item-content">
                         <div class="ex">${w.ex}</div>
                         <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
