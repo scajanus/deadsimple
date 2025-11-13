@@ -164,7 +164,8 @@
             let lastWorkoutId = undefined;
 
             h.forEach((w, i) => {
-                const actualIndex = all.length - 20 + (19 - i);
+                // Since h is reversed, i=0 is the last item (all.length-1), i=1 is second-to-last, etc.
+                const actualIndex = all.length - 1 - i;
 
                 // Add workout separator when workout_id changes
                 if (w.workout_id !== null && w.workout_id !== lastWorkoutId) {
