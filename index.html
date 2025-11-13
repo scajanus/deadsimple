@@ -73,8 +73,8 @@
                 return;
             }
 
-            // Generate new workout ID (timestamp)
-            const workoutId = Date.now();
+            // Use the date of the first exercise as the workout ID
+            const workoutId = unassigned[0].date;
 
             // Assign workout ID to all unassigned exercises
             all.forEach(exercise => {
