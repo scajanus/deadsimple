@@ -168,18 +168,21 @@
                 const actualIndex = all.length - 1 - i;
 
                 // Add workout separator when workout_id changes
-                if (w.workout_id !== null && w.workout_id !== lastWorkoutId) {
-                    html += `<div class="workout-separator">
-                        <div class="workout-label">Workout - ${new Date(w.workout_id).toLocaleDateString()}</div>
-                    </div>`;
+                if (w.workout_id !== lastWorkoutId) {
+                    if (w.workout_id === null) {
+                        html += `<div class="workout-separator">
+                            <div class="workout-label">Workout - In progress</div>
+                        </div>`;
+                    } else {
+                        html += `<div class="workout-separator">
+                            <div class="workout-label">Workout - ${new Date(w.workout_id).toLocaleDateString()}</div>
+                        </div>`;
+                    }
                 }
-
-                // Add workout_id badge for in-progress workouts
-                const badge = w.workout_id === null ? '<span class="in-progress-badge">In progress</span>' : '';
 
                 html += `<div class="item ${w.workout_id === null ? 'in-progress' : ''}">
                     <div class="item-content">
-                        <div class="ex">${w.ex} ${badge}</div>
+                        <div class="ex">${w.ex}</div>
                         <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
                         <div class="dt">${new Date(w.date).toLocaleString()}</div>
                     </div>
