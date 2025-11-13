@@ -185,7 +185,7 @@
                 html += `<div class="item ${!w.workout_id ? 'in-progress' : ''}">
                     <div class="item-content">
                         <div class="ex">${w.ex}</div>
-                        <div>${w.wt}${w.unit} × ${w.reps.join(', ')}</div>
+                        <div>${w.reps.join(', ')} × ${w.wt}${w.unit}</div>
                         <div class="dt">${new Date(w.date).toLocaleString()}</div>
                     </div>
                     <button class="del" onclick="del(${actualIndex})">🗑️</button>
