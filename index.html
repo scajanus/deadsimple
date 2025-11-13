@@ -117,7 +117,7 @@
                     curr > prev ? '📈 More reps!' :
                     isHeavier(last, w) ? '😓 Lighter' :
                     curr < prev ? '😓 Fewer reps' : '👍 Same';
-                msg(`Last: ${last.wt} ${last.unit} x ${last.reps.join(',')}. ${comp}`);
+                msg(`Last: ${last.reps.join(',')} x ${last.wt} ${last.unit}. ${comp}`);
             }
 
             input.value = '';
