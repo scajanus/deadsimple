@@ -117,7 +117,7 @@
                     curr > prev ? '📈 More reps!' :
                     isHeavier(last, w) ? '😓 Lighter' :
                     curr < prev ? '😓 Fewer reps' : '👍 Same';
-                msg(`Last: ${last.wt}${last.unit} x ${last.reps.join(',')}. ${comp}`);
+                msg(`Last: ${last.wt} ${last.unit} x ${last.reps.join(',')}. ${comp}`);
             }
 
             input.value = '';
@@ -185,7 +185,7 @@
                 html += `<div class="item ${!w.workout_id ? 'in-progress' : ''}">
                     <div class="item-content">
                         <div class="ex">${w.ex}</div>
-                        <div>${w.reps.join(', ')} × ${w.wt}${w.unit}</div>
+                        <div>${w.reps.join(', ')} × ${w.wt} ${w.unit}</div>
                         <div class="dt">${new Date(w.date).toLocaleString()}</div>
                     </div>
                     <button class="del" onclick="del(${actualIndex})">🗑️</button>
