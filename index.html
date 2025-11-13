@@ -22,7 +22,6 @@
         .item-content { flex: 1; }
         .ex { color: #0f8; font-weight: bold; }
         .dt { color: #888; font-size: 12px; }
-        .in-progress-badge { background: #0f8; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-left: 8px; }
         .workout-separator { margin: 20px 0 10px 0; padding: 8px 0; border-top: 2px solid #444; }
         .workout-label { color: #888; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         #install { background: #f80; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
@@ -49,23 +48,18 @@
         const save = w => localStorage.setItem('w', JSON.stringify([...get(), w]));
         const saveAll = w => localStorage.setItem('w', JSON.stringify(w));
 
+        const toKg = (wt, unit) => (unit === 'lbs' || unit === 'lb') ? wt * 0.453592 : wt;
+        const totalReps = (reps) => reps.reduce((a, b) => a + b, 0);
+
         function isHeavier(current, previous) {
-            const toKg = (wt, unit) =>
-                (unit === 'lbs' || unit === 'lb') ? wt * 0.453592 : wt;
             return toKg(current.wt, current.unit) > toKg(previous.wt, previous.unit);
         }
 
         // Create parser instance (InputParser is loaded from external file)
         const inputParser = new InputParser();
 
-        // Parse function uses strategy pattern from inputParser.js
-        function parse(t) {
-            return inputParser.parse(t);
-        }
-
         function endWorkout() {
             const all = get();
-            // Match exercises with no workout_id (null or undefined for backward compatibility)
             const unassigned = all.filter(x => !x.workout_id);
 
             if (unassigned.length === 0) {
@@ -73,32 +67,39 @@
                 return;
             }
 
-            // Use the date of the first exercise as the workout ID
+            // Use first exercise date as workout ID, assign to all unassigned
             const workoutId = unassigned[0].date;
-
-            // Assign workout ID to all unassigned exercises
-            all.forEach(exercise => {
-                if (!exercise.workout_id) {
-                    exercise.workout_id = workoutId;
-                }
-            });
+            all.forEach(ex => { if (!ex.workout_id) ex.workout_id = workoutId; });
 
             saveAll(all);
             msg(`Workout ended! 🎉 ${unassigned.length} exercise${unassigned.length > 1 ? 's' : ''} saved.`);
             show();
         }
 
+        function comparePerformance(current, previous) {
+            const currTotal = totalReps(current.reps);
+            const prevTotal = totalReps(previous.reps);
+
+            if (isHeavier(current, previous)) return '💪 Heavier!';
+            if (currTotal > prevTotal) return '📈 More reps!';
+            if (isHeavier(previous, current)) return '😓 Lighter';
+            if (currTotal < prevTotal) return '😓 Fewer reps';
+            return '👍 Same';
+        }
+
         function log() {
             const input = document.getElementById('i');
-            const w = parse(input.value);
-            if (!w) { msg('Bad format. Try: "squat 5,5 x 100 kg" or "squat 10,8,6 x 225 lbs" or "end workout"'); return; }
+            const w = inputParser.parse(input.value);
+            if (!w) {
+                msg('Bad format. Try: "squat 5,5 x 100 kg" or "squat 10,8,6 x 225 lbs" or "end workout"');
+                return;
+            }
+
+            input.value = '';
 
             // Handle commands
             if (w.type === 'command') {
-                if (w.action === 'end_workout') {
-                    endWorkout();
-                }
-                input.value = '';
+                if (w.action === 'end_workout') endWorkout();
                 return;
             }
 
@@ -111,16 +112,10 @@
             if (!last) {
                 msg(`${w.ex}: First time! 🎉`);
             } else {
-                const curr = w.reps.reduce((a,b) => a+b, 0);
-                const prev = last.reps.reduce((a,b) => a+b, 0);
-                const comp = isHeavier(w, last) ? '💪 Heavier!' :
-                    curr > prev ? '📈 More reps!' :
-                    isHeavier(last, w) ? '😓 Lighter' :
-                    curr < prev ? '😓 Fewer reps' : '👍 Same';
-                msg(`Last: ${last.reps.join(',')} x ${last.wt} ${last.unit}. ${comp}`);
+                const comparison = comparePerformance(w, last);
+                msg(`Last: ${last.reps.join(',')} x ${last.wt} ${last.unit}. ${comparison}`);
             }
 
-            input.value = '';
             show();
         }
 
@@ -157,41 +152,44 @@
             type();
         }
 
+        function renderWorkoutSeparator(workoutId) {
+            const label = workoutId
+                ? `Workout - ${new Date(workoutId).toLocaleDateString()}`
+                : 'Workout - In progress';
+            return `<div class="workout-separator">
+                <div class="workout-label">${label}</div>
+            </div>`;
+        }
+
+        function renderExercise(exercise, index) {
+            const inProgress = !exercise.workout_id ? 'in-progress' : '';
+            return `<div class="item ${inProgress}">
+                <div class="item-content">
+                    <div class="ex">${exercise.ex}</div>
+                    <div>${exercise.reps.join(', ')} × ${exercise.wt} ${exercise.unit}</div>
+                    <div class="dt">${new Date(exercise.date).toLocaleString()}</div>
+                </div>
+                <button class="del" onclick="del(${index})">🗑️</button>
+            </div>`;
+        }
+
         function show() {
             const all = get();
-            const h = all.slice(-20).reverse();  // Show more items to see workout groups
+            const recent = all.slice(-20).reverse();
 
             let html = '';
             let lastWorkoutId = undefined;
 
-            h.forEach((w, i) => {
-                // Since h is reversed, i=0 is the last item (all.length-1), i=1 is second-to-last, etc.
+            recent.forEach((exercise, i) => {
                 const actualIndex = all.length - 1 - i;
 
-                // Add workout separator when workout_id changes
-                if (w.workout_id !== lastWorkoutId) {
-                    if (!w.workout_id) {
-                        // No workout_id (null or undefined) = in progress
-                        html += `<div class="workout-separator">
-                            <div class="workout-label">Workout - In progress</div>
-                        </div>`;
-                    } else {
-                        html += `<div class="workout-separator">
-                            <div class="workout-label">Workout - ${new Date(w.workout_id).toLocaleDateString()}</div>
-                        </div>`;
-                    }
+                // Add separator when workout changes
+                if (exercise.workout_id !== lastWorkoutId) {
+                    html += renderWorkoutSeparator(exercise.workout_id);
+                    lastWorkoutId = exercise.workout_id;
                 }
 
-                html += `<div class="item ${!w.workout_id ? 'in-progress' : ''}">
-                    <div class="item-content">
-                        <div class="ex">${w.ex}</div>
-                        <div>${w.reps.join(', ')} × ${w.wt} ${w.unit}</div>
-                        <div class="dt">${new Date(w.date).toLocaleString()}</div>
-                    </div>
-                    <button class="del" onclick="del(${actualIndex})">🗑️</button>
-                </div>`;
-
-                lastWorkoutId = w.workout_id;
+                html += renderExercise(exercise, actualIndex);
             });
 
             document.getElementById('hist').innerHTML = html;
